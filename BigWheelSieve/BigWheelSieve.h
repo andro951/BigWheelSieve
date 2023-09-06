@@ -79,6 +79,7 @@ Description - Prime sieve that aims to create 1 large wheel that is an array of 
 TODO:
 	Convert stitches to vector.
 	Shift starting point to have 5 or 7 as the starting wheel.
+	Get rid of 1 from primes and related.
 
 	change queue to a set and calculate all values as soon as possible.  Need to figure that part out.
 	Clean up things remaining from using a vector instead of a queue.
@@ -90,23 +91,34 @@ TODO:
 
 long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	auto start = std::chrono::high_resolution_clock::now();
-	if (end < 7)
-		return SimpleSieve(primes, end);
+	if (end <= 7) {
+		//Starts with 2, 3, 5, 7.  Designed to handle a much higher end value than < 7.
+		if (end < 7) {
+			int lastPrime;
+			do {
+				primes.pop_back();
+				lastPrime = primes.size() > 1 ? primes.back() : 0;
+			} while (lastPrime > end && lastPrime > 0);
+		}
 
-	int num = 7;// 1;//7
+		auto end_early_time = std::chrono::high_resolution_clock::now();
+		return std::chrono::duration_cast<std::chrono::milliseconds>(end_early_time - start).count();
+	}
+
+	int num = 11;// 1;//7
 	int bigWheelCircumfrance = 30;// 1;//30
 	int nextWheelToDrop = 5;// 1;//5
-	int primesNextWheelIndex = 3;// 0;//3
+	int primesNextWheelIndex = 2;// 0;//3
 	int bigWheelIndex = 2;// 0;//2
 	int bigWheelSize = 10;// 1;//10
-	primes = { 1, 2, 3, 5, 7 };// { 1 };//1, 2, 3, 5, 7
-	std::vector<int> wheelRepititionCircumfrances = { 1, 2, 6, 30, 210 };// { 1 };//Same size as primes 1, 2, 6, 30, 210
+	primes = { 2, 3, 5, 7 };// { 1 };//1, 2, 3, 5, 7
+	std::vector<int> wheelRepititionCircumfrances = { 2, 6, 30, 210 };// { 1 };//Same size as primes 1, 2, 6, 30, 210
 
 	std::vector<int> pseudoPrimes = { 5, 7 };// { };//5, 7
 	std::vector<int> pseudoPrimeBlockingValues = { 25, 49 };// { };//Same size as pseudoPrimes 25, 49
 	std::vector<int> pseudoPrimeWheelBaseValue = { 5, 7 };// { };//Same size as pseudoPrimes 5, 7
-	std::vector<int> pseudoPrime_PrimeMultiplierIndexes = { 3, 4 };// { };//Same size as pseudoPrimes 3, 4
-	std::vector<int> pseduoPrimeToWheelIndex = { 3, 4 };// { };//Same size as pseudoPrimes 3, 4
+	std::vector<int> pseudoPrime_PrimeMultiplierIndexes = { 2, 3 };// { };//Same size as pseudoPrimes 3, 4
+	std::vector<int> pseduoPrimeToWheelIndex = { 2, 3 };// { };//Same size as pseudoPrimes 3, 4
 	std::vector<bool> pseduoPrimeFirstHit = { true, true };// { };//Same size as pseudoPrimes true, true
 
 	std::vector<int> bigWheel = { 4, 2, 4, 2, 4, 2, 4, 2, 4, 2 };// { 1 };//4, 2, 4, 2, 4, 2, 4, 2, 4, 2
@@ -114,7 +126,7 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>>> queue;// { 0, 1 };// { };//0, 1
 	queue.push({ 25, 0 });
 	queue.push({ 49, 1 });
-	std::vector<std::vector<int>> stitches = {{}, { 2 }, { 3 }, { 5 }, { 7 }};// { {} };//TODO: replace with a vector.  Can get index instead of doing keys. {}, { 2 }, { 3 }, { 5 }, { 7 }
+	std::vector<std::vector<int>> stitches = {{ /*2*/ }, { /*3*/ }, { 5 }, { 7 }};// { {} };//TODO: replace with a vector.  Can get index instead of doing keys. {}, { 2 }, { 3 }, { 5 }, { 7 }
 
 	int nextPseudoPrimeBlockingValue = 25;// 1;//25
 	bool printAll = false;
@@ -122,31 +134,7 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	bool troubleShootingQue = false;
 	std::vector<int> queValuesForTroubleshooting = { };
 
-	while (num < end) {
-		if (troubleShootingQue || printAll) {
-			std::cout << "num += bigWheel[" << bigWheelIndex << "]; " << num << " += " << bigWheel[bigWheelIndex] << " = " << num + bigWheel[bigWheelIndex] << ", nextPseudoPrimeBlockingValue: " << nextPseudoPrimeBlockingValue << std::endl;
-			std::cout << "queValues: ";
-			bool first = true;
-			for (int i = 0; i < queValuesForTroubleshooting.size(); ++i) {
-				if (first) {
-					first = false;
-				}
-				else {
-					std::cout << ", ";
-				}
-
-				int queValue = queValuesForTroubleshooting[i];
-				std::cout << queValue;
-				if (queValue == 1331)
-					std::cout << "(found 1331 at " << i << ")";
-			}
-
-			std::cout << std::endl;
-		}
-
-		//Big wheel spinning.  num is the next potential prime.
-		num += bigWheel[bigWheelIndex];
-
+	do {
 		//Check if the number is the next non-prime that is not taken care of by the big wheel.
 		if (num == nextPseudoPrimeBlockingValue) {
 			//not prime
@@ -172,31 +160,6 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 					pseudoPrime_PrimeMultiplierIndexes.push_back(wheelIndex);//TODO: replace size() with an integer that tracks size instead.
 					pseduoPrimeFirstHit.push_back(true);
 					queue.push({ newPseudoPrimeBlockingValue, newPseudoPrimeIndex });
-					/*int highestValueInQue = queue.size() > 1 ? pseudoPrimeBlockingValues[queue[queue.size() - 1]] : 0;
-					if (highestValueInQue >= newPseudoPrimeBlockingValue) {
-						int i = queIndex + 1;
-						int queNextIndex = queue[i];
-						int currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
-						while (currentQueBlockingValue < newPseudoPrimeBlockingValue) {
-							queNextIndex = queue[++i];
-							currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
-						}
-
-						queue.insert(queue.begin() + i, newPseudoPrimeIndex);
-						if (troubleShootingQue || printAll) {
-							queValuesForTroubleshooting.insert(queValuesForTroubleshooting.begin() + i, newPseudoPrimeBlockingValue);
-						}
-					}
-					else {
-						queue.push_back(newPseudoPrimeIndex);
-						if (troubleShootingQue) {
-							std::cout << "queue.push_back(" << newPseudoPrimeIndex << ");  queValue: " << newPseudoPrimeBlockingValue << std::endl;
-						}
-
-						if (troubleShootingQue || printAll) {
-							queValuesForTroubleshooting.push_back(newPseudoPrimeBlockingValue);
-						}
-					}*/
 				}
 			}
 
@@ -211,55 +174,6 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 
 			if (pseudoPrimeBlockingValues[pseudoPrimeIndex] > 0) {
 				queue.push({ nextHitValue, pseudoPrimeIndex });
-				/*int highestValueInQue = queue.size() > 1 ? pseudoPrimeBlockingValues[queue[queue.size() - 1]] : 0;
-				if (highestValueInQue > nextHitValue) {
-					int i = queIndex + 1;
-					int queNextIndex = queue[i];
-					int currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
-					while (currentQueBlockingValue < nextHitValue) {
-						queNextIndex = queue[++i];
-						currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
-					}
-					
-					if (troubleShootingQue) {
-						std::cout << "queue.insert(" << pseudoPrimeBlockingValues[*(queue.begin() + i - 1)] << " | " << pseudoPrimeBlockingValues[*(queue.begin() + i)] << " , " << pseudoPrimeIndex << ");  queValue: " << nextHitValue << std::endl;
-					}
-
-					queue.insert(queue.begin() + i, pseudoPrimeIndex);
-					if (troubleShootingQue || printAll) {
-						queValuesForTroubleshooting.insert(queValuesForTroubleshooting.begin() + i, nextHitValue);
-					}
-					
-					if (troubleShootingQue) {
-						std::cout << "queValues after insert: ";
-						bool first = true;
-						for (int i = 0; i < queValuesForTroubleshooting.size(); ++i) {
-							if (first) {
-								first = false;
-							}
-							else {
-								std::cout << ", ";
-							}
-
-							int queValue = queValuesForTroubleshooting[i];
-							std::cout << queValue;
-							if (queValue == 1331)
-								std::cout << "(found 1331 at " << i << ")";
-						}
-
-						std::cout << std::endl;
-					}
-				}
-				else {
-					queue.push_back(pseudoPrimeIndex);
-					if (troubleShootingQue) {
-						std::cout << "queue.push_back(" << pseudoPrimeIndex << ");  queValue: " << nextHitValue << std::endl;
-					}
-					
-					if (troubleShootingQue || printAll) {
-						queValuesForTroubleshooting.push_back(nextHitValue);
-					}
-				}*/
 			}
 
 			nextPseudoPrimeBlockingValue = pseudoPrimeBlockingValues[queue.size() > 0 ? queue.top().second : 0];
@@ -285,31 +199,6 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 					pseudoPrime_PrimeMultiplierIndexes.push_back(primeIndex);//TODO: replace size() with an integer that tracks size instead.
 					pseduoPrimeFirstHit.push_back(true);
 					queue.push({ square, pseudoPrimeIndex });
-					/*int highestValueInQue = queue.size() > 1 ? pseudoPrimeBlockingValues[queue[queue.size() - 1]] : 0;
-					if (highestValueInQue > square) {
-						int i = queIndex + 1;
-						int queNextIndex = queue[i];
-						int currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
-						while (currentQueBlockingValue < square) {
-							queNextIndex = queue[++i];
-							currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
-						}
-
-						queue.insert(queue.begin() + i, pseudoPrimeIndex);
-						if (troubleShootingQue || printAll) {
-							queValuesForTroubleshooting.insert(queValuesForTroubleshooting.begin() + i, square);
-						}
-					}
-					else {
-						queue.push_back(pseudoPrimeIndex);
-						if (troubleShootingQue) {
-							std::cout << "queue.push_back(" << pseudoPrimeIndex << ");  queValue: " << square << std::endl;
-						}
-						
-						if (troubleShootingQue || printAll) {
-							queValuesForTroubleshooting.push_back(square);
-						}
-					}*/
 				}
 				
 				stitches.push_back(std::vector<int>{ num });
@@ -378,10 +267,32 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 				std::cout << std::endl;
 			}
 		}
-	}
 
-	primes.erase(primes.begin());
-	primes.erase(primes.end() - 1);
+		if (troubleShootingQue || printAll) {
+			std::cout << "num += bigWheel[" << bigWheelIndex << "]; " << num << " += " << bigWheel[bigWheelIndex] << " = " << num + bigWheel[bigWheelIndex] << ", nextPseudoPrimeBlockingValue: " << nextPseudoPrimeBlockingValue << std::endl;
+			std::cout << "queValues: ";
+			bool first = true;
+			for (int i = 0; i < queValuesForTroubleshooting.size(); ++i) {
+				if (first) {
+					first = false;
+				}
+				else {
+					std::cout << ", ";
+				}
+
+				int queValue = queValuesForTroubleshooting[i];
+				std::cout << queValue;
+				if (queValue == 1331)
+					std::cout << "(found 1331 at " << i << ")";
+			}
+
+			std::cout << std::endl;
+		}
+
+		//Big wheel spinning.  num is the next potential prime.
+		num += bigWheel[bigWheelIndex];
+
+	} while (num < end);
 
 	auto end_time = std::chrono::high_resolution_clock::now();
 	return std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start).count();

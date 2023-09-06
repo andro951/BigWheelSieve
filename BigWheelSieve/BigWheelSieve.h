@@ -69,6 +69,7 @@ Description - Prime sieve that aims to create 1 large wheel that is an array of 
 #include <cmath>
 #include <set>
 #include <map>
+#include <queue>
 #include "SharedConstants.h"
 #include "SimpleSieve.h"
 #include "Wheel.h"
@@ -78,9 +79,9 @@ Description - Prime sieve that aims to create 1 large wheel that is an array of 
 TODO:
 	Convert stitches to vector.
 	Shift starting point to have 5 or 7 as the starting wheel.
+	change queue to a set and calculate all values as soon as possible.  Need to figure that part out.
 
-	change que to a set and calculate all values as soon as possible.  Need to figure that part out.
-	Try ANOTHER COPY/PASTED VERSION that uses an array of bools instead of a que set.
+	Try ANOTHER COPY/PASTED VERSION that uses an array of bools instead of a queue set.
 	Try ANOTHER COPY/PASTED VERSION that uses a vector of wheel objects instead of all the vectors
 
 */
@@ -108,9 +109,13 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 
 	std::vector<int> bigWheel = { 4, 2, 4, 2, 4, 2, 4, 2, 4, 2 };// { 1 };//4, 2, 4, 2, 4, 2, 4, 2, 4, 2
 
-	std::vector<int> que = { 0, 1 };// { };//Continuously grows.  TODO: replace with a queue. 0, 1
-	std::vector<std::vector<int>> stitches = { {}, { 2 }, { 3 }, { 5 }, { 7 } };// { {} };//TODO: replace with a vector.  Can get index instead of doing keys. {}, { 2 }, { 3 }, { 5 }, { 7 }
-	int queIndex = 0;// 0;//0
+	//std::vector<int> queue = { 0, 1 };// { };//Continuously grows.  TODO: replace with a queue. 0, 1
+	std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>>> queue;// { 0, 1 };// { };//Continuously grows.  TODO: replace with a queue. 0, 1
+	//std::priority_queue<std::pair<int, int>> queue;// { 0, 1 };// { };//Continuously grows.  TODO: replace with a queue. 0, 1
+	queue.push({ 25, 0 });
+	queue.push({ 49, 1 });
+	std::vector<std::vector<int>> stitches = {{}, { 2 }, { 3 }, { 5 }, { 7 }};// { {} };//TODO: replace with a vector.  Can get index instead of doing keys. {}, { 2 }, { 3 }, { 5 }, { 7 }
+	//int queIndex = 0;// 0;//0
 
 	int nextPseudoPrimeBlockingValue = 25;// 1;//25
 	bool printAll = false;
@@ -146,7 +151,9 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 		//Check if the number is the next non-prime that is not taken care of by the big wheel.
 		if (num == nextPseudoPrimeBlockingValue) {
 			//not prime
-			int pseudoPrimeIndex = que[queIndex];
+			std::pair<int, int> queValue = queue.top();
+			queue.pop();
+			int pseudoPrimeIndex = queValue.second;
 			int pseudoPrime = pseudoPrimes[pseudoPrimeIndex];
 			int wheel = pseudoPrimeWheelBaseValue[pseudoPrimeIndex];
 			int wheelIndex = pseduoPrimeToWheelIndex[pseudoPrimeIndex];
@@ -165,32 +172,32 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 					pseduoPrimeToWheelIndex.push_back(wheelIndex);
 					pseudoPrime_PrimeMultiplierIndexes.push_back(wheelIndex);//TODO: replace size() with an integer that tracks size instead.
 					pseduoPrimeFirstHit.push_back(true);
-					
-					int highestValueInQue = que.size() > 1 ? pseudoPrimeBlockingValues[que[que.size() - 1]] : 0;
+					queue.push({ newPseudoPrimeBlockingValue, newPseudoPrimeIndex });
+					/*int highestValueInQue = queue.size() > 1 ? pseudoPrimeBlockingValues[queue[queue.size() - 1]] : 0;
 					if (highestValueInQue >= newPseudoPrimeBlockingValue) {
 						int i = queIndex + 1;
-						int queNextIndex = que[i];
+						int queNextIndex = queue[i];
 						int currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
 						while (currentQueBlockingValue < newPseudoPrimeBlockingValue) {
-							queNextIndex = que[++i];
+							queNextIndex = queue[++i];
 							currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
 						}
 
-						que.insert(que.begin() + i, newPseudoPrimeIndex);
+						queue.insert(queue.begin() + i, newPseudoPrimeIndex);
 						if (troubleShootingQue || printAll) {
 							queValuesForTroubleshooting.insert(queValuesForTroubleshooting.begin() + i, newPseudoPrimeBlockingValue);
 						}
 					}
 					else {
-						que.push_back(newPseudoPrimeIndex);
+						queue.push_back(newPseudoPrimeIndex);
 						if (troubleShootingQue) {
-							std::cout << "que.push_back(" << newPseudoPrimeIndex << ");  queValue: " << newPseudoPrimeBlockingValue << std::endl;
+							std::cout << "queue.push_back(" << newPseudoPrimeIndex << ");  queValue: " << newPseudoPrimeBlockingValue << std::endl;
 						}
 
 						if (troubleShootingQue || printAll) {
 							queValuesForTroubleshooting.push_back(newPseudoPrimeBlockingValue);
 						}
-					}
+					}*/
 				}
 			}
 
@@ -204,21 +211,22 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 			}
 
 			if (pseudoPrimeBlockingValues[pseudoPrimeIndex] > 0) {
-				int highestValueInQue = que.size() > 1 ? pseudoPrimeBlockingValues[que[que.size() - 1]] : 0;
+				queue.push({ nextHitValue, pseudoPrimeIndex });
+				/*int highestValueInQue = queue.size() > 1 ? pseudoPrimeBlockingValues[queue[queue.size() - 1]] : 0;
 				if (highestValueInQue > nextHitValue) {
 					int i = queIndex + 1;
-					int queNextIndex = que[i];
+					int queNextIndex = queue[i];
 					int currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
 					while (currentQueBlockingValue < nextHitValue) {
-						queNextIndex = que[++i];
+						queNextIndex = queue[++i];
 						currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
 					}
 					
 					if (troubleShootingQue) {
-						std::cout << "que.insert(" << pseudoPrimeBlockingValues[*(que.begin() + i - 1)] << " | " << pseudoPrimeBlockingValues[*(que.begin() + i)] << " , " << pseudoPrimeIndex << ");  queValue: " << nextHitValue << std::endl;
+						std::cout << "queue.insert(" << pseudoPrimeBlockingValues[*(queue.begin() + i - 1)] << " | " << pseudoPrimeBlockingValues[*(queue.begin() + i)] << " , " << pseudoPrimeIndex << ");  queValue: " << nextHitValue << std::endl;
 					}
 
-					que.insert(que.begin() + i, pseudoPrimeIndex);
+					queue.insert(queue.begin() + i, pseudoPrimeIndex);
 					if (troubleShootingQue || printAll) {
 						queValuesForTroubleshooting.insert(queValuesForTroubleshooting.begin() + i, nextHitValue);
 					}
@@ -244,19 +252,18 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 					}
 				}
 				else {
-					que.push_back(pseudoPrimeIndex);
+					queue.push_back(pseudoPrimeIndex);
 					if (troubleShootingQue) {
-						std::cout << "que.push_back(" << pseudoPrimeIndex << ");  queValue: " << nextHitValue << std::endl;
+						std::cout << "queue.push_back(" << pseudoPrimeIndex << ");  queValue: " << nextHitValue << std::endl;
 					}
 					
 					if (troubleShootingQue || printAll) {
 						queValuesForTroubleshooting.push_back(nextHitValue);
 					}
-				}
+				}*/
 			}
 
-			int queNextIndex2 = que.size() - 1 > queIndex ? que[++queIndex] : 0;
-			nextPseudoPrimeBlockingValue = pseudoPrimeBlockingValues[queNextIndex2];
+			nextPseudoPrimeBlockingValue = pseudoPrimeBlockingValues[queue.size() > 0 ? queue.top().second : 0];
 		}
 		else {
 			//Not a hit, so the number is prime.
@@ -278,31 +285,32 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 					pseduoPrimeToWheelIndex.push_back(primeIndex);
 					pseudoPrime_PrimeMultiplierIndexes.push_back(primeIndex);//TODO: replace size() with an integer that tracks size instead.
 					pseduoPrimeFirstHit.push_back(true);
-					int highestValueInQue = que.size() > 1 ?  pseudoPrimeBlockingValues[que[que.size() - 1]] : 0;
+					queue.push({ square, pseudoPrimeIndex });
+					/*int highestValueInQue = queue.size() > 1 ? pseudoPrimeBlockingValues[queue[queue.size() - 1]] : 0;
 					if (highestValueInQue > square) {
 						int i = queIndex + 1;
-						int queNextIndex = que[i];
+						int queNextIndex = queue[i];
 						int currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
 						while (currentQueBlockingValue < square) {
-							queNextIndex = que[++i];
+							queNextIndex = queue[++i];
 							currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
 						}
 
-						que.insert(que.begin() + i, pseudoPrimeIndex);
+						queue.insert(queue.begin() + i, pseudoPrimeIndex);
 						if (troubleShootingQue || printAll) {
 							queValuesForTroubleshooting.insert(queValuesForTroubleshooting.begin() + i, square);
 						}
 					}
 					else {
-						que.push_back(pseudoPrimeIndex);
+						queue.push_back(pseudoPrimeIndex);
 						if (troubleShootingQue) {
-							std::cout << "que.push_back(" << pseudoPrimeIndex << ");  queValue: " << square << std::endl;
+							std::cout << "queue.push_back(" << pseudoPrimeIndex << ");  queValue: " << square << std::endl;
 						}
 						
 						if (troubleShootingQue || printAll) {
 							queValuesForTroubleshooting.push_back(square);
 						}
-					}
+					}*/
 				}
 				
 				stitches.push_back(std::vector<int>{ num });

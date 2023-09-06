@@ -70,44 +70,49 @@ Description - Prime sieve that aims to create 1 large wheel that is an array of 
 #include <set>
 #include <map>
 #include "SharedConstants.h"
+#include "SimpleSieve.h"
 #include "Wheel.h"
 #include "Logging.h"
 
 /*
 TODO:
 	Convert stitches to vector.
-
 	Shift starting point to have 5 or 7 as the starting wheel.
+
 	change que to a set and calculate all values as soon as possible.  Need to figure that part out.
 	Try ANOTHER COPY/PASTED VERSION that uses an array of bools instead of a que set.
 	Try ANOTHER COPY/PASTED VERSION that uses a vector of wheel objects instead of all the vectors
+
 */
 
 long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	auto start = std::chrono::high_resolution_clock::now();
-	int num = 1;
-	int bigWheelCircumfrance = 1;
-	int nextWheelToDrop = 1;
-	int primesNextWheelIndex = 0;
-	int bigWheelIndex = 0;
-	int bigWheelSize = 1;
-	primes = { 1 };
-	std::vector<int> wheelRepititionCircumfrances = { 1 };//Same size as primes
+	if (end < 7)
+		return SimpleSieve(primes, end);
 
-	std::vector<int> pseudoPrimes = { };
-	std::vector<int> pseudoPrimeBlockingValues = { };//Same size as pseudoPrimes
-	std::vector<int> pseudoPrimeWheelBaseValue = { };//Same size as pseudoPrimes
-	std::vector<int> pseudoPrime_PrimeMultiplierIndexes = { };//Same size as pseudoPrimes
-	std::vector<int> pseduoPrimeToWheelIndex = { };//Same size as pseudoPrimes
-	std::vector<bool> pseduoPrimeFirstHit = { };//Same size as pseudoPrimes
+	int num = 7;// 1;//7
+	int bigWheelCircumfrance = 30;// 1;//30
+	int nextWheelToDrop = 5;// 1;//5
+	int primesNextWheelIndex = 3;// 0;//3
+	int bigWheelIndex = 2;// 0;//2
+	int bigWheelSize = 10;// 1;//10
+	primes = { 1, 2, 3, 5, 7 };// { 1 };//1, 2, 3, 5, 7
+	std::vector<int> wheelRepititionCircumfrances = { 1, 2, 6, 30, 210 };// { 1 };//Same size as primes 1, 2, 6, 30, 210
 
-	std::vector<int> bigWheel = { 1 };
+	std::vector<int> pseudoPrimes = { 5, 7 };// { };//5, 7
+	std::vector<int> pseudoPrimeBlockingValues = { 25, 49 };// { };//Same size as pseudoPrimes 25, 49
+	std::vector<int> pseudoPrimeWheelBaseValue = { 5, 7 };// { };//Same size as pseudoPrimes 5, 7
+	std::vector<int> pseudoPrime_PrimeMultiplierIndexes = { 3, 4 };// { };//Same size as pseudoPrimes 3, 4
+	std::vector<int> pseduoPrimeToWheelIndex = { 3, 4 };// { };//Same size as pseudoPrimes 3, 4
+	std::vector<bool> pseduoPrimeFirstHit = { true, true };// { };//Same size as pseudoPrimes true, true
 
-	std::vector<int> que = { };//Continuously grows.  TODO: replace with a queue.
-	std::vector<std::vector<int>> stitches = { {} };//TODO: replace with a vector.  Can get index instead of doing keys.
-	int queIndex = 0;
+	std::vector<int> bigWheel = { 4, 2, 4, 2, 4, 2, 4, 2, 4, 2 };// { 1 };//4, 2, 4, 2, 4, 2, 4, 2, 4, 2
 
-	int nextPseudoPrimeBlockingValue = 1;
+	std::vector<int> que = { 0, 1 };// { };//Continuously grows.  TODO: replace with a queue. 0, 1
+	std::vector<std::vector<int>> stitches = { {}, { 2 }, { 3 }, { 5 }, { 7 } };// { {} };//TODO: replace with a vector.  Can get index instead of doing keys. {}, { 2 }, { 3 }, { 5 }, { 7 }
+	int queIndex = 0;// 0;//0
+
+	int nextPseudoPrimeBlockingValue = 25;// 1;//25
 	bool printAll = false;
 
 	bool troubleShootingQue = false;
@@ -297,9 +302,6 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 						if (troubleShootingQue || printAll) {
 							queValuesForTroubleshooting.push_back(square);
 						}
-
-						if (num > nextPseudoPrimeBlockingValue)//TODO: remove when wheelsNextValue is set to 2, 3, 5, 7, etc.
-							nextPseudoPrimeBlockingValue = square;//TODO: remove when wheelsNextValue is set to 2, 3, 5, 7, etc.
 					}
 				}
 				

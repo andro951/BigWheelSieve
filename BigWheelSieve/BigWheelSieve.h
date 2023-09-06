@@ -79,7 +79,9 @@ Description - Prime sieve that aims to create 1 large wheel that is an array of 
 TODO:
 	Convert stitches to vector.
 	Shift starting point to have 5 or 7 as the starting wheel.
+
 	change queue to a set and calculate all values as soon as possible.  Need to figure that part out.
+	Clean up things remaining from using a vector instead of a queue.
 
 	Try ANOTHER COPY/PASTED VERSION that uses an array of bools instead of a queue set.
 	Try ANOTHER COPY/PASTED VERSION that uses a vector of wheel objects instead of all the vectors
@@ -109,13 +111,10 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 
 	std::vector<int> bigWheel = { 4, 2, 4, 2, 4, 2, 4, 2, 4, 2 };// { 1 };//4, 2, 4, 2, 4, 2, 4, 2, 4, 2
 
-	//std::vector<int> queue = { 0, 1 };// { };//Continuously grows.  TODO: replace with a queue. 0, 1
-	std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>>> queue;// { 0, 1 };// { };//Continuously grows.  TODO: replace with a queue. 0, 1
-	//std::priority_queue<std::pair<int, int>> queue;// { 0, 1 };// { };//Continuously grows.  TODO: replace with a queue. 0, 1
+	std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>>> queue;// { 0, 1 };// { };//0, 1
 	queue.push({ 25, 0 });
 	queue.push({ 49, 1 });
 	std::vector<std::vector<int>> stitches = {{}, { 2 }, { 3 }, { 5 }, { 7 }};// { {} };//TODO: replace with a vector.  Can get index instead of doing keys. {}, { 2 }, { 3 }, { 5 }, { 7 }
-	//int queIndex = 0;// 0;//0
 
 	int nextPseudoPrimeBlockingValue = 25;// 1;//25
 	bool printAll = false;

@@ -68,24 +68,24 @@ void PrintVectorDiff(std::vector<T> correct, std::string name1, std::vector<T> t
 				testValue = test[testIndex];
 		}
 		else if (testValue > correctValue) {
-			if (correctIndex < correctSize - 1) {
+			if (++correctIndex < correctSize) {
 				missing.push_back(correctValue);
-				correctValue = correct[++correctIndex];
+				correctValue = correct[correctIndex];
 			}
 			else {
 				extra.push_back(testValue);
-				if (testIndex >= testSize - 1)
+				if (++testIndex >= testSize)
 					continue;
 
-				testValue = test[++testIndex];
+				testValue = test[testIndex];
 			}
 		}
 		else {
 			extra.push_back(testValue);
-			if (testIndex >= testSize - 1)
+			if (++testIndex >= testSize)
 				break;
 
-			testValue = test[++testIndex];
+			testValue = test[testIndex];
 		}
 	}
 

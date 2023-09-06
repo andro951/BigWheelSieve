@@ -133,6 +133,7 @@
     <ClInclude Include="BigWheelSieve.h" />
     <ClInclude Include="Logging.h" />
     <ClInclude Include="SharedConstants.h" />
+    <ClInclude Include="SieveOfSundaram.h" />
     <ClInclude Include="SimpleSieve.h" />
     <ClInclude Include="Wheel.h" />
   </ItemGroup>

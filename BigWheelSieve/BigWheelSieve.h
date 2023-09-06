@@ -73,14 +73,6 @@ Description - Prime sieve that aims to create 1 large wheel that is an array of 
 #include "Wheel.h"
 #include "Logging.h"
 
-//Starting number = wheel * wheel
-//Condition to drop wheel: nextValue > end || 
-
-//wheelsNextValues need to be made up of the products of all primes that haven't been dropped yet.
-//It looks like it is only multiples of primes and primes and pseudo primes.
-//Calculate the remainder of the wheels blocking values when their square is hit.
-//	This guarantees that the values needed in the range of their repetition circumference have been populated
-
 long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	auto start = std::chrono::high_resolution_clock::now();
 	int num = 1;
@@ -90,17 +82,7 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	int bigWheelIndex = 0;
 	int bigWheelSize = 1;
 	primes = { 1 };
-	//std::vector<int> wheels = { 1 };
-	//std::vector<int> wheelsNextPseudoPrime = { 1 };//Same size as primes //Not needed?
-
-	//std::vector<int> wheelValuePrimeMultiplierIndexs = { 0 };//Same size as primes
-	//std::vector<int> wheelsNextValues = { 1 };//Same size as primes
-	std::vector<long long> wheelRepititionCircumfrances = { 1 };//Same size as primes
-	//std::vector<std::vector<int>> wheelBlockingValues = { { 1 } };//Same size as primes.  Starts with just square then is populated in full up to the repetition circumference (or end) when the square is hit. 
-	//std::vector<int> wheelBlockingValues2 = { 1 };//Same size as primes.  Starts with just square.  Replaced by the next number each time it's hit.
-	//std::vector<int> wheelBlockingBases = { 1 };//Same size as primes.  Starts with wheel size.  Replaced by wheelSize^n as needed.
-	//std::vector<int> wheelBlockingPrimeIndexex = { 0 };//Same size as primes.  Starts with PrimeIndex.  Goes up by 1 each blocking value hit.
-	//Does need to use pseudo primes in the blocking value calculations and needs to have them in their own vector so they are separate from primes.
+	std::vector<int> wheelRepititionCircumfrances = { 1 };//Same size as primes
 
 	std::vector<int> pseudoPrimes = { };
 	std::vector<int> pseudoPrimeBlockingValues = { };//Same size as pseudoPrimes
@@ -112,37 +94,55 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	std::vector<int> bigWheel = { 1 };
 
 	std::vector<int> que = { };//Continuously grows.  TODO: replace with a queue.
-	std::map<int, std::vector<int>> stitches = { };//TOSO: replace with a vector.  Can get index instead of doing keys.
+	std::map<int, std::vector<int>> stitches = { };//TODO: replace with a vector.  Can get index instead of doing keys.
 	int queIndex = 0;
 
 	int nextPseudoPrimeBlockingValue = 1;
 	bool printAll = false;
 
+	bool troubleShootingQue = false;
+	std::vector<int> queValuesForTroubleshooting = { };
+
 	while (num < end) {
-		if (printAll) {
-			std::cout << "num += bigWheel[" << bigWheelIndex << "]; " << num << " += " << bigWheel[bigWheelIndex] << " = " << num + bigWheel[bigWheelIndex] << std::endl;
+		if (troubleShootingQue && (num + bigWheel[bigWheelIndex] == 1331 || num == 1331) || printAll) {
+			std::cout << "num += bigWheel[" << bigWheelIndex << "]; " << num << " += " << bigWheel[bigWheelIndex] << " = " << num + bigWheel[bigWheelIndex] << ", nextPseudoPrimeBlockingValue: " << nextPseudoPrimeBlockingValue << std::endl;
+			std::cout << "queValues: ";
+			bool first = true;
+			for (int i = 0; i < queValuesForTroubleshooting.size(); ++i) {
+				if (first) {
+					first = false;
+				}
+				else {
+					std::cout << ", ";
+				}
+
+				int queValue = queValuesForTroubleshooting[i];
+				std::cout << queValue;
+				if (queValue == 1331)
+					std::cout << "(found 1331 at " << i << ")";
+			}
+
+			std::cout << std::endl;
 		}
+
 		//Big wheel spinning.  num is the next potential prime.
 		num += bigWheel[bigWheelIndex];
 
-		//Check if the number is the next non-prime that is not taken care of by the wheels.
+		//Check if the number is the next non-prime that is not taken care of by the big wheel.
 		if (num == nextPseudoPrimeBlockingValue) {
-			//TODO: This never triggers currently.
 			//not prime
-			//int wheelIndex = que[queIndex];
-			//int wheel = primes[wheelIndex];
 			int pseudoPrimeIndex = que[queIndex];
 			int pseudoPrime = pseudoPrimes[pseudoPrimeIndex];
 			int wheel = pseudoPrimeWheelBaseValue[pseudoPrimeIndex];
 			int wheelIndex = pseduoPrimeToWheelIndex[pseudoPrimeIndex];
 			int wheelRepetitionCircumfrance = wheelRepititionCircumfrances[wheelIndex];
 			stitches[wheel].push_back(num);
-			if (false && pseduoPrimeFirstHit[pseudoPrimeIndex]) {
+			if (pseduoPrimeFirstHit[pseudoPrimeIndex]) {
 				pseduoPrimeFirstHit[pseudoPrimeIndex] = false;
 
 				//num is the pseudo prime.
 				int newPseudoPrimeBlockingValue = num * pseudoPrime;
-				if (wheelRepetitionCircumfrance > newPseudoPrimeBlockingValue) {
+				if (wheelRepetitionCircumfrance >= newPseudoPrimeBlockingValue) {
 					int newPseudoPrimeIndex = pseudoPrimes.size();
 					pseudoPrimes.push_back(num);
 					pseudoPrimeBlockingValues.push_back(newPseudoPrimeBlockingValue);
@@ -152,53 +152,33 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 					pseduoPrimeFirstHit.push_back(true);
 					
 					int highestValueInQue = que.size() > 1 ? pseudoPrimeBlockingValues[que[que.size() - 1]] : 0;
-					if (highestValueInQue > newPseudoPrimeBlockingValue) {
+					if (highestValueInQue >= newPseudoPrimeBlockingValue) {
 						int i = queIndex + 1;
 						int queNextIndex = que[i];
 						int currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
-						//int currentQueBlockingValue = wheelBlockingValues[queNextIndex][wheelValuePrimeMultiplierIndexs[queNextIndex]];
 						while (currentQueBlockingValue < newPseudoPrimeBlockingValue) {
 							queNextIndex = que[++i];
-							//currentQueBlockingValue = wheelBlockingValues[queNextIndex][wheelValuePrimeMultiplierIndexs[queNextIndex]];
 							currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
 						}
 
-						que.insert(que.begin() + i, pseudoPrimeIndex);
+						que.insert(que.begin() + i, newPseudoPrimeIndex);
+						if (troubleShootingQue || printAll)
+							queValuesForTroubleshooting.insert(queValuesForTroubleshooting.begin() + i, newPseudoPrimeBlockingValue);
 					}
 					else {
-						que.push_back(pseudoPrimeIndex);
+						que.push_back(newPseudoPrimeIndex);
+						if (troubleShootingQue)
+							std::cout << "que.push_back(" << newPseudoPrimeIndex << ");  queValue: " << newPseudoPrimeBlockingValue << std::endl;
+						
+						if (troubleShootingQue || printAll)
+							queValuesForTroubleshooting.push_back(newPseudoPrimeBlockingValue);
 					}
 				}
 			}
-			//if (wheelsNextPseudoPrime[wheelIndex] == num) {
-			//	pseudoPrimes.push_back(num);
-			//	wheelsNextPseudoPrime[wheelIndex] = num * wheel;
-			//}
 
-			//If first hit.
-			/*if (wheelValuePrimeMultiplierIndexs[wheelIndex] == 0) {
-				//Calculate the remainder of the wheels blocking values when their square is hit.
-				//	This guarantees that the values needed in the range of their repetition circumference have been populated
-				bool finished = false;
-				int wheelRepetitionCircumfrance = wheelRepititionCircumfrances[wheelIndex];
-				int base = wheel;
-				int nextPrimeMultiplerIndex = wheelIndex + 1;
-				int nextHitValue = base * primes[nextPrimeMultiplerIndex];
-				while (nextHitValue < wheelRepetitionCircumfrance && nextHitValue < end) {
-					do {
-						wheelBlockingValues[wheelIndex].push_back(nextHitValue);
-						nextHitValue = primes[++nextPrimeMultiplerIndex] * base;
-					}
-					while (nextHitValue < wheelRepetitionCircumfrance && nextHitValue < end);
-
-					base *= wheel;
-					nextHitValue = base * wheel;
-					nextPrimeMultiplerIndex = wheelIndex;
-				}
-			}*///Close, but the repetition circumference gets too high for the current primes found.  Have to do 1 at a time instead.
 			int nextPrimeMultiplerIndex = ++pseudoPrime_PrimeMultiplierIndexes[pseudoPrimeIndex];
 			int nextHitValue = pseudoPrime * primes[nextPrimeMultiplerIndex];
-			if (nextHitValue < wheelRepetitionCircumfrance) {//&& nextHitValue < end) {
+			if (nextHitValue < wheelRepetitionCircumfrance) {
 				pseudoPrimeBlockingValues[pseudoPrimeIndex] = nextHitValue;
 			}
 			else {
@@ -211,55 +191,50 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 					int i = queIndex + 1;
 					int queNextIndex = que[i];
 					int currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
-					//int currentQueBlockingValue = wheelBlockingValues[queNextIndex][wheelValuePrimeMultiplierIndexs[queNextIndex]];
 					while (currentQueBlockingValue < nextHitValue) {
 						queNextIndex = que[++i];
-						//currentQueBlockingValue = wheelBlockingValues[queNextIndex][wheelValuePrimeMultiplierIndexs[queNextIndex]];
 						currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
 					}
-					//while (wheelsNextValues[que[i]] < nextValue) {//TODO: Do binary search.
-					//	i++;
-					//}
-
+					
+					if (troubleShootingQue)
+						std::cout << "que.insert(" << pseudoPrimeBlockingValues[*(que.begin() + i - 1)] << " | " << pseudoPrimeBlockingValues[*(que.begin() + i)] << " , " << pseudoPrimeIndex << ");  queValue: " << nextHitValue << std::endl;
+					
 					que.insert(que.begin() + i, pseudoPrimeIndex);
-					//que.insert(que.begin() + i, wheelIndex);
-					//wheelsNextValues[wheelIndex] = nextHitValue;
+					if (troubleShootingQue || printAll)
+						queValuesForTroubleshooting.insert(queValuesForTroubleshooting.begin() + i, nextHitValue);
+					
+					if (troubleShootingQue) {
+						std::cout << "queValues after insert: ";
+						bool first = true;
+						for (int i = 0; i < queValuesForTroubleshooting.size(); ++i) {
+							if (first) {
+								first = false;
+							}
+							else {
+								std::cout << ", ";
+							}
+
+							int queValue = queValuesForTroubleshooting[i];
+							std::cout << queValue;
+							if (queValue == 1331)
+								std::cout << "(found 1331 at " << i << ")";
+						}
+
+						std::cout << std::endl;
+					}
 				}
 				else {
 					que.push_back(pseudoPrimeIndex);
+					if (troubleShootingQue)
+						std::cout << "que.push_back(" << pseudoPrimeIndex << ");  queValue: " << nextHitValue << std::endl;
+					
+					if (troubleShootingQue || printAll)
+						queValuesForTroubleshooting.push_back(nextHitValue);
 				}
 			}
 
-			/*int nextWheelValuePrimeMultiplierIndex = ++wheelValuePrimeMultiplierIndexs[wheelIndex];
-			bool shouldCheckThisWheelNextValue = wheelBlockingValues[wheelIndex].size() - 1 >= nextWheelValuePrimeMultiplierIndex;
-			if (shouldCheckThisWheelNextValue) {
-				//int nextValue = pseudoPrimes[++pseudoPrimeIndexes[wheelIndex]] * wheel;
-				int nextValue = wheelBlockingValues[wheelIndex][nextWheelValuePrimeMultiplierIndex];
-				if (nextValue < wheelRepititionCircumfrances[wheelIndex]) {
-					//Add the hit wheel's next value to the que.
-					int i = queIndex + 1;
-					int queNextIndex = que[i];
-					int currentQueBlockingValue = wheelBlockingValues[queNextIndex][wheelValuePrimeMultiplierIndexs[queNextIndex]];
-					while (currentQueBlockingValue < nextValue) {
-						queNextIndex = que[++i];
-						currentQueBlockingValue = wheelBlockingValues[queNextIndex][wheelValuePrimeMultiplierIndexs[queNextIndex]];
-					}
-					//while (wheelsNextValues[que[i]] < nextValue) {//TODO: Do binary search.
-					//	i++;
-					//}
-
-					que.insert(que.begin() + i, wheelIndex);
-					wheelsNextValues[wheelIndex] = nextValue;
-				}
-			}*/
-			
-			//Might be needed if wheels are added past the point when they should have been dropped.
-			//while (que[queIndex] < nextWheelToDrop) {
-			//	++queIndex;
-			//}
 			int queNextIndex2 = que.size() - 1 > queIndex ? que[++queIndex] : 0;
 			nextPseudoPrimeBlockingValue = pseudoPrimeBlockingValues[queNextIndex2];
-			//wheelsNextValue = wheelBlockingValues[queNextIndex2][wheelValuePrimeMultiplierIndexs[queNextIndex2]];
 		}
 		else {
 			//Not a hit, so the number is prime.
@@ -267,18 +242,13 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 			int square = num * num;
 			if (square < end) {
 				int primeIndex = primes.size() - 1;
-				//wheelsNextPseudoPrime.push_back(square);
 				int lastWheelCircumfrance = wheelRepititionCircumfrances[wheelRepititionCircumfrances.size() - 1];
 				int wheelRepititionCircumfrance = lastWheelCircumfrance * num;
 				if (wheelRepititionCircumfrance > end)
 					wheelRepititionCircumfrance = end;
 
 				wheelRepititionCircumfrances.push_back(wheelRepititionCircumfrance);
-				//wheelsNextValues.push_back(square);
-				//wheelValuePrimeMultiplierIndexs.push_back(0);
-				//wheelBlockingValues.push_back({ square });
-				//wheelBlockingValues2.push_back(square);
-				if (wheelRepititionCircumfrance > square) {
+				if (wheelRepititionCircumfrance >= square) {
 					int pseudoPrimeIndex = pseudoPrimes.size();
 					pseudoPrimes.push_back(num);
 					pseudoPrimeBlockingValues.push_back(square);
@@ -291,26 +261,29 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 						int i = queIndex + 1;
 						int queNextIndex = que[i];
 						int currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
-						//int currentQueBlockingValue = wheelBlockingValues[queNextIndex][wheelValuePrimeMultiplierIndexs[queNextIndex]];
 						while (currentQueBlockingValue < square) {
 							queNextIndex = que[++i];
-							//currentQueBlockingValue = wheelBlockingValues[queNextIndex][wheelValuePrimeMultiplierIndexs[queNextIndex]];
 							currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
 						}
 
 						que.insert(que.begin() + i, pseudoPrimeIndex);
+						if (troubleShootingQue || printAll)
+							queValuesForTroubleshooting.insert(queValuesForTroubleshooting.begin() + i, square);
 					}
 					else {
 						que.push_back(pseudoPrimeIndex);
+						if (troubleShootingQue)
+							std::cout << "que.push_back(" << pseudoPrimeIndex << ");  queValue: " << square << std::endl;
+						
+						if (troubleShootingQue || printAll)
+							queValuesForTroubleshooting.push_back(square);
+
 						if (num > nextPseudoPrimeBlockingValue)//TODO: remove when wheelsNextValue is set to 2, 3, 5, 7, etc.
 							nextPseudoPrimeBlockingValue = square;//TODO: remove when wheelsNextValue is set to 2, 3, 5, 7, etc.
 					}
 				}
-
-				//if (wheelsNextValue < num)//TODO: remove when wheelsNextValue is set to 2, 3, 5, 7, etc.
-				//	wheelsNextValue = square;
 				
-				stitches.emplace(num, std::vector<int>{ num });// .insert({ num, });
+				stitches.emplace(num, std::vector<int>{ num });
 			}
 		}
 
@@ -342,21 +315,9 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 				tempNum += numToAdd2;
 				if (tempBigWheelIndex == 1) {
 					tempBigWheelIndex = 0;
-					//Stitch end and first
-					//TODO: Check this, may have to be swapped
-					//bigWheel[bigWheel.size() - 1] += bigWheel[0];//Send first to end
-					//bigWheel.erase(bigWheel.begin());//Remove first
-					//bigWheel[0] += bigWheel[bigWheel.size() - 1];//Send end to first
-					//bigWheel.erase(bigWheel.end() - 1);//Remove end
 					bigWheel[0] += bigWheel[1];
 					bigWheel.erase(bigWheel.begin() + 1);
 					--bigWheelIndex;
-				}
-				else if (tempBigWheelIndex == 0) {
-					//Stitch end and 2nd to end
-					int bigWheelEnd = bigWheel.size() - 1;
-					bigWheel[bigWheelEnd - 1] += bigWheel[bigWheelEnd];
-					bigWheel.erase(bigWheel.end() - 1);
 				}
 				else {
 					//Stitch previous 2

@@ -73,6 +73,16 @@ Description - Prime sieve that aims to create 1 large wheel that is an array of 
 #include "Wheel.h"
 #include "Logging.h"
 
+/*
+TODO:
+	Convert stitches to vector.
+
+	Shift starting point to have 5 or 7 as the starting wheel.
+	change que to a set and calculate all values as soon as possible.  Need to figure that part out.
+	Try ANOTHER COPY/PASTED VERSION that uses an array of bools instead of a que set.
+	Try ANOTHER COPY/PASTED VERSION that uses a vector of wheel objects instead of all the vectors
+*/
+
 long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	auto start = std::chrono::high_resolution_clock::now();
 	int num = 1;
@@ -94,7 +104,7 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	std::vector<int> bigWheel = { 1 };
 
 	std::vector<int> que = { };//Continuously grows.  TODO: replace with a queue.
-	std::map<int, std::vector<int>> stitches = { };//TODO: replace with a vector.  Can get index instead of doing keys.
+	std::vector<std::vector<int>> stitches = { {} };//TODO: replace with a vector.  Can get index instead of doing keys.
 	int queIndex = 0;
 
 	int nextPseudoPrimeBlockingValue = 1;
@@ -104,7 +114,7 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	std::vector<int> queValuesForTroubleshooting = { };
 
 	while (num < end) {
-		if (troubleShootingQue && (num + bigWheel[bigWheelIndex] == 1331 || num == 1331) || printAll) {
+		if (troubleShootingQue || printAll) {
 			std::cout << "num += bigWheel[" << bigWheelIndex << "]; " << num << " += " << bigWheel[bigWheelIndex] << " = " << num + bigWheel[bigWheelIndex] << ", nextPseudoPrimeBlockingValue: " << nextPseudoPrimeBlockingValue << std::endl;
 			std::cout << "queValues: ";
 			bool first = true;
@@ -136,7 +146,7 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 			int wheel = pseudoPrimeWheelBaseValue[pseudoPrimeIndex];
 			int wheelIndex = pseduoPrimeToWheelIndex[pseudoPrimeIndex];
 			int wheelRepetitionCircumfrance = wheelRepititionCircumfrances[wheelIndex];
-			stitches[wheel].push_back(num);
+			stitches[wheelIndex].push_back(num);
 			if (pseduoPrimeFirstHit[pseudoPrimeIndex]) {
 				pseduoPrimeFirstHit[pseudoPrimeIndex] = false;
 
@@ -162,16 +172,19 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 						}
 
 						que.insert(que.begin() + i, newPseudoPrimeIndex);
-						if (troubleShootingQue || printAll)
+						if (troubleShootingQue || printAll) {
 							queValuesForTroubleshooting.insert(queValuesForTroubleshooting.begin() + i, newPseudoPrimeBlockingValue);
+						}
 					}
 					else {
 						que.push_back(newPseudoPrimeIndex);
-						if (troubleShootingQue)
+						if (troubleShootingQue) {
 							std::cout << "que.push_back(" << newPseudoPrimeIndex << ");  queValue: " << newPseudoPrimeBlockingValue << std::endl;
-						
-						if (troubleShootingQue || printAll)
+						}
+
+						if (troubleShootingQue || printAll) {
 							queValuesForTroubleshooting.push_back(newPseudoPrimeBlockingValue);
+						}
 					}
 				}
 			}
@@ -196,12 +209,14 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 						currentQueBlockingValue = pseudoPrimeBlockingValues[queNextIndex];
 					}
 					
-					if (troubleShootingQue)
+					if (troubleShootingQue) {
 						std::cout << "que.insert(" << pseudoPrimeBlockingValues[*(que.begin() + i - 1)] << " | " << pseudoPrimeBlockingValues[*(que.begin() + i)] << " , " << pseudoPrimeIndex << ");  queValue: " << nextHitValue << std::endl;
-					
+					}
+
 					que.insert(que.begin() + i, pseudoPrimeIndex);
-					if (troubleShootingQue || printAll)
+					if (troubleShootingQue || printAll) {
 						queValuesForTroubleshooting.insert(queValuesForTroubleshooting.begin() + i, nextHitValue);
+					}
 					
 					if (troubleShootingQue) {
 						std::cout << "queValues after insert: ";
@@ -225,11 +240,13 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 				}
 				else {
 					que.push_back(pseudoPrimeIndex);
-					if (troubleShootingQue)
+					if (troubleShootingQue) {
 						std::cout << "que.push_back(" << pseudoPrimeIndex << ");  queValue: " << nextHitValue << std::endl;
+					}
 					
-					if (troubleShootingQue || printAll)
+					if (troubleShootingQue || printAll) {
 						queValuesForTroubleshooting.push_back(nextHitValue);
+					}
 				}
 			}
 
@@ -267,23 +284,26 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 						}
 
 						que.insert(que.begin() + i, pseudoPrimeIndex);
-						if (troubleShootingQue || printAll)
+						if (troubleShootingQue || printAll) {
 							queValuesForTroubleshooting.insert(queValuesForTroubleshooting.begin() + i, square);
+						}
 					}
 					else {
 						que.push_back(pseudoPrimeIndex);
-						if (troubleShootingQue)
+						if (troubleShootingQue) {
 							std::cout << "que.push_back(" << pseudoPrimeIndex << ");  queValue: " << square << std::endl;
+						}
 						
-						if (troubleShootingQue || printAll)
+						if (troubleShootingQue || printAll) {
 							queValuesForTroubleshooting.push_back(square);
+						}
 
 						if (num > nextPseudoPrimeBlockingValue)//TODO: remove when wheelsNextValue is set to 2, 3, 5, 7, etc.
 							nextPseudoPrimeBlockingValue = square;//TODO: remove when wheelsNextValue is set to 2, 3, 5, 7, etc.
 					}
 				}
 				
-				stitches.emplace(num, std::vector<int>{ num });
+				stitches.push_back(std::vector<int>{ num });
 			}
 		}
 
@@ -301,10 +321,10 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 			int tempNum = 1;
 			int tempBigWheelIndex = -1;
 			if (printAll) {
-				PrintVector(stitches[nextWheelToDrop], "Stitches");
+				PrintVector(stitches[primesNextWheelIndex], "Stitches");
 			}
 			
-			for (const auto& stitch : stitches[nextWheelToDrop]) {//TODO: Make stitches pointers/reference to the bigWheel values instead of using tempNum/tempBigWheelIndex
+			for (const auto& stitch : stitches[primesNextWheelIndex]) {//TODO: Make stitches pointers/reference to the bigWheel values instead of using tempNum/tempBigWheelIndex
 				//Stitch
 				while (tempNum < stitch) {
 					int numToAdd = bigWheel[++tempBigWheelIndex];

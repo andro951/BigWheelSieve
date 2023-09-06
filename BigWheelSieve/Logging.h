@@ -56,10 +56,16 @@ void PrintVectorDiff(std::vector<T> correct, std::string name1, std::vector<T> t
 	int correctSize = correct.size();
 	while (testIndex < testSize) {
 		if (correctValue == testValue) {
-			if (correctIndex < correctSize - 1)
-				correctValue = correct[++correctIndex];
+			if (++correctIndex < correctSize)
+				correctValue = correct[correctIndex];
 
-			testValue = test[++testIndex];
+			//if (testIndex >= testSize - 1) {
+			//	missing.push_back(correctValue);
+			//	correctValue = correct[++correctIndex];
+			//	continue;
+			//}
+			if (++testIndex < testSize)
+				testValue = test[testIndex];
 		}
 		else if (testValue > correctValue) {
 			if (correctIndex < correctSize - 1) {
@@ -69,7 +75,7 @@ void PrintVectorDiff(std::vector<T> correct, std::string name1, std::vector<T> t
 			else {
 				extra.push_back(testValue);
 				if (testIndex >= testSize - 1)
-					break;
+					continue;
 
 				testValue = test[++testIndex];
 			}

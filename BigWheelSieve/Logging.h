@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <set>
+#include <queue>
 #include <string>
 #include "PrimeFactorization.h"
 
@@ -40,6 +41,27 @@ void PrintSet(std::set<T>& valueSet, std::string name = "") {
 		}
 
 		std::cout << value;
+	}
+
+	std::cout << std::endl;
+}
+
+/// <summary>
+/// Makes a copy of the queue and prints its key value pairs.
+/// </summary>
+template<typename TKey, typename T>
+void PrintQueuePairs(std::priority_queue<std::pair<TKey, T>, std::vector<std::pair<TKey, T>>, std::greater<std::pair<TKey, T>>> queue) {
+	bool first = true;
+	while (!queue.empty()) {
+		if (first) {
+			first = false;
+		}
+		else {
+			std::cout << ", ";
+		}
+
+		std::cout << "{ " << queue.top().first << ", " << queue.top().second << " }";
+		queue.pop();
 	}
 
 	std::cout << std::endl;

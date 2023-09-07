@@ -14,9 +14,9 @@ int main() {
     std::cout << "Simple Sieve Time: " << simpleSieveTime << "ms" << ", primesCount: " << simpleSievePrimes.size() << std::endl;
     //PrintVector(simpleSievePrimes, "Simple Sieve Primes");
 
-    std::vector<int> sundaramPrimes;
-    long sundaramTime = SieveOfSundaram(sundaramPrimes);
-    std::cout << "Sundaram Sieve Time: " << sundaramTime << "ms" << ", primesCount: " << sundaramPrimes.size() << std::endl;
+    //std::vector<int> sundaramPrimes;
+    //long sundaramTime = SieveOfSundaram(sundaramPrimes);
+    //std::cout << "Sundaram Sieve Time: " << sundaramTime << "ms" << ", primesCount: " << sundaramPrimes.size() << std::endl;
     //PrintVector(sundaramPrimes, "Sundaram Sieve Primes");
 
     std::vector<int> bigWheelSievePrimes;

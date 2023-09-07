@@ -41,5 +41,8 @@
     <ClInclude Include="SieveOfSundaram.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PrimeFactorization.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

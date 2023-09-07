@@ -94,10 +94,10 @@ Description - Prime sieve that aims to create 1 large compositeWheelBasePrime th
 //	Shift starting point to have 5 or 7 as the starting compositeWheelBasePrime.
 //	Get rid of 1 from primes and related.
 //	change queue to an actual queue
-//
 //	calculate all queue values as soon as possible.  Need to figure that part out.
 //	Clean up things remaining from using a vector instead of a queue.
 //
+//  Value past 100000
 //	Make stitches pointers or something similar to eliminate the repetitive rolling for stitches.
 //	Try ANOTHER COPY/PASTED VERSION that uses an array of bools instead of a queue set.
 //	Try ANOTHER COPY/PASTED VERSION that uses a vector of compositeWheelBasePrime objects instead of all the vectors

@@ -119,7 +119,6 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	}
 
 	int potentialPrime = 11;
-	int bigWheelCircumfrance = 30;
 	int bigWheelIndex = 2;
 	int bigWheelSize = 10;
 	int primesNextWheelIndex = 2;
@@ -216,38 +215,37 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 			//13 *  2311 "30,043 too high, stop"
 			if (compositeWheelWillHaveChildren[compositeWheelIndex]) {
 				int compositeWheelPrimeStartingValue = primes[currentPrimeMultiplerIndex];
-				int newCompositeWheelBlockingValue = potentialPrime * compositeWheelPrimeStartingValue;
-				if (wheelRepetitionCircumfrance >= newCompositeWheelBlockingValue) {
-					int newCompositeWheelIndex = compositeWheels.size();
-					compositeWheels.push_back(potentialPrime);
-					compositeWheelNextBlockingValues.push_back(newCompositeWheelBlockingValue);
-					compositeWheelToPrimeWheelIndex.push_back(compositeWheelBasePrimeIndex);
-					compositeWheelPrimeMultiplierIndexes.push_back(currentPrimeMultiplerIndex);
-					compositeWheelPrimeStartingIndexs.push_back(currentPrimeMultiplerIndex);
-					compositeWheelWillHaveChildren.push_back(true);
-					compositeWheelIndexQueue.push({ newCompositeWheelBlockingValue, newCompositeWheelIndex });
-				}
-				else {
-					compositeWheelWillHaveChildren[compositeWheelIndex] = false;
+				int max = wheelRepetitionCircumfrance / compositeWheelPrimeStartingValue;
+				if (potentialPrime <= max) {
+					int newCompositeWheelBlockingValue = potentialPrime * compositeWheelPrimeStartingValue;
+					if (wheelRepetitionCircumfrance >= newCompositeWheelBlockingValue) {
+						int newCompositeWheelIndex = compositeWheels.size();
+						compositeWheels.push_back(potentialPrime);
+						compositeWheelNextBlockingValues.push_back(newCompositeWheelBlockingValue);
+						compositeWheelToPrimeWheelIndex.push_back(compositeWheelBasePrimeIndex);
+						compositeWheelPrimeMultiplierIndexes.push_back(currentPrimeMultiplerIndex);
+						compositeWheelPrimeStartingIndexs.push_back(currentPrimeMultiplerIndex);
+						compositeWheelWillHaveChildren.push_back(true);
+						compositeWheelIndexQueue.push({ newCompositeWheelBlockingValue, newCompositeWheelIndex });
+					}
+					else {
+						compositeWheelWillHaveChildren[compositeWheelIndex] = false;
+					}
 				}
 			}
 
 			//Check the next composite hit for the composite wheel that was just hit.
 			int nextPrimeMultiplerIndex = ++compositeWheelPrimeMultiplierIndexes[compositeWheelIndex];
 			int nextPrimeToMultiply = primes[nextPrimeMultiplerIndex];
-			int nextHitValue = compositeWheel * nextPrimeToMultiply;
 
 			//compositeWheelWillHaveChildren[compositeWheelIndex] = thisCompositeWheelWillHaveChildren;
-			if (nextHitValue < wheelRepetitionCircumfrance) {
+			int max = wheelRepetitionCircumfrance / compositeWheel;
+			if (nextPrimeToMultiply <= max) {
+				int nextHitValue = compositeWheel * nextPrimeToMultiply;
 				compositeWheelNextBlockingValues[compositeWheelIndex] = nextHitValue;
-			}
-			else {
-				compositeWheelNextBlockingValues[compositeWheelIndex] = 0;
-			}
-
-			//Stop using the composite wheel if it has no more hits in the desired range/repetition circumference.
-			if (compositeWheelNextBlockingValues[compositeWheelIndex] > 0)
 				compositeWheelIndexQueue.push({ nextHitValue, compositeWheelIndex });
+			}
+				
 
 			nextCompositeWheelBlockingValue = compositeWheelNextBlockingValues[compositeWheelIndexQueue.size() > 0 ? compositeWheelIndexQueue.top().second : 0];
 		}
@@ -262,9 +260,24 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 				int square = potentialPrime * potentialPrime;
 				int primeIndex = primes.size() - 1;
 				int lastWheelCircumfrance = wheelRepititionCircumfrances[wheelRepititionCircumfrances.size() - 1];
-				int wheelRepititionCircumfrance = lastWheelCircumfrance * potentialPrime;
+				int wheelRepititionCircumfrance;
+				if (lastWheelCircumfrance >= end) {
+					wheelRepititionCircumfrance = end;
+				}
+				else {
+					int max = end / lastWheelCircumfrance;
+					if (potentialPrime > max) {
+						wheelRepititionCircumfrance = end;
+					}
+					else {
+						wheelRepititionCircumfrance = lastWheelCircumfrance * potentialPrime;
+						if (wheelRepititionCircumfrance > end)
+							wheelRepititionCircumfrance = end;
+					}
+				}
+
 				//Cap wheelRepititionCircumfrance at end to prevent overflowing.
-				wheelRepititionCircumfrances.push_back(wheelRepititionCircumfrance > end ? end : wheelRepititionCircumfrance);
+				wheelRepititionCircumfrances.push_back(wheelRepititionCircumfrance);
 
 				//Add one or more composite wheels based off the current prime.
 				if (wheelRepititionCircumfrance >= square) {
@@ -317,7 +330,6 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 			}
 
 			bigWheelSize = bigWheel.size();//TODO: calculate manually.
-			bigWheelCircumfrance *= nextWheelToDrop;
 		}
 
 		//Spin the big wheel to get the next potential prime.

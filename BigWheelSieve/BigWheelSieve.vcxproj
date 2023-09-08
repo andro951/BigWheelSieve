@@ -134,6 +134,7 @@
     <ClInclude Include="Logging.h" />
     <ClInclude Include="PrimeFactorization.h" />
     <ClInclude Include="SharedConstants.h" />
+    <ClInclude Include="SieveOfAtkin.h" />
     <ClInclude Include="SieveOfSundaram.h" />
     <ClInclude Include="SimpleSieve.h" />
     <ClInclude Include="Wheel.h" />

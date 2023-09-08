@@ -134,7 +134,6 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	int nextCompositeWheelBlockingValue = 25;
 	std::vector<int> compositeWheels = { 5, 7 };
 	std::vector<int> compositeWheelNextBlockingValues = { 25, 49 };//Same size as compositeWheels
-	std::vector<int> compositeWheelBasePrimes = { 5, 7 };//Same size as compositeWheels//Could be calculated from primes[compositeWheelToPrimeWheelIndex[compositeWheelIndex]] instead
 	std::vector<int> compositeWheelPrimeMultiplierIndexes = { 2, 3 };//Same size as compositeWheels
 	std::vector<int> compositeWheelToPrimeWheelIndex = { 2, 3 };//Same size as compositeWheels
 	std::vector<int> compositeWheelPrimeStartingIndexs = { 2, 3 };//Same size as compositeWheels
@@ -144,41 +143,92 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	compositeWheelIndexQueue.push({ 25, 0 });
 	compositeWheelIndexQueue.push({ 49, 1 });
 
-	bool printAll = false;
-	bool troubleShootingThreeOrHigherMultipules = false;
-
 	do {
 		//Check if the number is the next composite that isn't skipped by the big wheel.
 		if (potentialPrime == nextCompositeWheelBlockingValue) {
 			//Composite value hit.  Replace the next composite blocking value with the next composite value from the queue.
+
+			//The compositeWheel stays the same while the primeMultiplierIndex increases so that compositeWheel is multiplied by 
+			// every prime >= it's primeStartingIndex.
+			//Denoted as compositeWheel * (startingPrime) meaning the compositeWheel will be multiplied by the set of all primes 
+			// starting with startingPrime while the product is <= repetition circumference.
+			//Example 13 * (13) is 13 * set of prime numbers between 13 and 173.
+			//13 * (13)
+			//13 *  13
+			//13 *  17
+			//13 *  19
+			//13 *  23
+			//...
+			//13 *  173
 			std::pair<int, int> queValue = compositeWheelIndexQueue.top();
 			compositeWheelIndexQueue.pop();
 			int compositeWheelIndex = queValue.second;
 			int compositeWheel = compositeWheels[compositeWheelIndex];
 			int compositeWheelPrimeStartingIndex = compositeWheelPrimeStartingIndexs[compositeWheelIndex];
-			int compositeWheelPrimeStartingValue = primes[compositeWheelPrimeStartingIndex];
 			int compositeWheelBasePrimeIndex = compositeWheelToPrimeWheelIndex[compositeWheelIndex];
 			int wheelRepetitionCircumfrance = wheelRepititionCircumfrances[compositeWheelBasePrimeIndex];
+			int currentPrimeMultiplerIndex = compositeWheelPrimeMultiplierIndexes[compositeWheelIndex];
 			stitches[compositeWheelBasePrimeIndex].push_back(potentialPrime);
 
-			//Create a Larger Child composite wheel if allowed.
-			//Example: potentialPrime = 143, startingPrime = 13, create a child that will have hits of 143 * 13, 143 * 17, 143 * 19...
+			//Create a Larger Child composite wheel if a previous child attempt first hit wasn't above the repetition circumference.
+			//compositeWheel * startingPrime has a child, compositeWheel * startingPrime * (startingPrime).
+			//Example: 13 * 13 has a child, 13 * 13 * (13).
+			//Putting them all together:
+			//Repetition Circumference: 30030
+			//13 * (13)
+			//13 *  13 -> 13 * 13 * (13)
+			//            13 * 13 *  13 -> 13 * 13 * 13 * (13)
+			//                             13 * 13 * 13 *  13 "no child"
+			//                             13 * 13 * 13 *  17 "37,349 too high, stop"
+			// 
+			//            13 * 13 *  17 -> 13 * 13 * 17 * (17) "37,349 too high, stop having children"
+			//            13 * 13 *  19
+			//            13 * 13 *  23
+			//            ...
+			//            13 * 13 *  173
+			//            13 * 13 *  179 "30,251 too high, stop"
+			// 
+			//13 *  17 -> 13 * 17 * (17)
+			//            13 * 17 *  17
+			//            13 * 17 *  19
+			//            13 * 17 *  23
+			//            ...
+			//            13 * 17 *  131
+			//            13 * 17 *  137 "30,277 too high, stop"
+			//
+			//13 *  19 -> 13 * 19 * (19)
+			//            13 * 19 *  19
+			//            13 * 19 *  23
+			//            13 * 19 *  29
+			//            ...
+			//            13 * 19 *  113
+			//            13 * 19 *  127 "31,369 too high, stop"
+			//..........................
+			//13 *  47 -> 13 * 47 * (47)
+			//            13 * 47 *  47
+			//            13 * 47 *  53 "32,383 too high, stop"
+			// 
+			//13 *  53 -> 13 * 53 * (53) "32,383 too high, stop having children"
+			//13 *  59
+			//13 *  61
+			//...
+			//13 *  2309
+			//13 *  2311 "30,043 too high, stop"
 			if (compositeWheelWillHaveChildren[compositeWheelIndex]) {
+				int compositeWheelPrimeStartingValue = primes[currentPrimeMultiplerIndex];
 				int newCompositeWheelBlockingValue = potentialPrime * compositeWheelPrimeStartingValue;
 				if (wheelRepetitionCircumfrance >= newCompositeWheelBlockingValue) {
-					if (troubleShootingThreeOrHigherMultipules) {
-						PrintPrimeFactors(potentialPrime);
-					}
-
 					int newCompositeWheelIndex = compositeWheels.size();
 					compositeWheels.push_back(potentialPrime);
 					compositeWheelNextBlockingValues.push_back(newCompositeWheelBlockingValue);
-					compositeWheelBasePrimes.push_back(compositeWheelBasePrimes[compositeWheelIndex]);
 					compositeWheelToPrimeWheelIndex.push_back(compositeWheelBasePrimeIndex);
-					compositeWheelPrimeMultiplierIndexes.push_back(compositeWheelPrimeStartingIndex);
-					compositeWheelPrimeStartingIndexs.push_back(compositeWheelPrimeStartingIndex);
+					compositeWheelPrimeMultiplierIndexes.push_back(currentPrimeMultiplerIndex);
+					compositeWheelPrimeStartingIndexs.push_back(currentPrimeMultiplerIndex);
 					compositeWheelWillHaveChildren.push_back(true);
 					compositeWheelIndexQueue.push({ newCompositeWheelBlockingValue, newCompositeWheelIndex });
+				}
+				else {
+					compositeWheelWillHaveChildren[compositeWheelIndex] = false;
 				}
 			}
 
@@ -187,12 +237,7 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 			int nextPrimeToMultiply = primes[nextPrimeMultiplerIndex];
 			int nextHitValue = compositeWheel * nextPrimeToMultiply;
 
-			//Composite wheels create children each time they hit a composite value if the multiple doesn't exceed the 
-			//	compositeWheelPrimeStartingIndex.
-			//Example: potentialPrime = 121, basePrime = 11, multiple = 11, startingPrime = 11 Fine because multiple <= startingPrime.
-			//Example: potentialPrime = 121, basePrime = 11, multiple = 13, startingPrime = 11 not fine, stop having children.
-			bool thisCompositeWheelWillHaveChildren = nextPrimeToMultiply <= compositeWheelPrimeStartingValue;
-			compositeWheelWillHaveChildren[compositeWheelIndex] = thisCompositeWheelWillHaveChildren;
+			//compositeWheelWillHaveChildren[compositeWheelIndex] = thisCompositeWheelWillHaveChildren;
 			if (nextHitValue < wheelRepetitionCircumfrance) {
 				compositeWheelNextBlockingValues[compositeWheelIndex] = nextHitValue;
 			}
@@ -227,47 +272,11 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 					int compositeWheelIndex = compositeWheels.size();
 					compositeWheels.push_back(potentialPrime);
 					compositeWheelNextBlockingValues.push_back(square);
-					compositeWheelBasePrimes.push_back(potentialPrime);
 					compositeWheelToPrimeWheelIndex.push_back(primeIndex);
 					compositeWheelPrimeMultiplierIndexes.push_back(primeIndex);
 					compositeWheelPrimeStartingIndexs.push_back(primeIndex);
 					compositeWheelWillHaveChildren.push_back(true);
 					compositeWheelIndexQueue.push({ square, compositeWheelIndex });
-
-					//Add a new smaller composite wheel for each prime below this where smallerPrime * potentialPrime is less than
-					//  the smaller prime's wheelRepititionCircumfrance.
-					//Not needed below 11 * 13, so stop after the index for 11, which is 4.
-					for (int smallerPrimeIndex = primeIndex - 1; smallerPrimeIndex > 3; --smallerPrimeIndex) {
-						int smallerWheelRepetitionCircumfrance = wheelRepititionCircumfrances[smallerPrimeIndex];
-						int smallerPrime = primes[smallerPrimeIndex];
-						int smallerCompositeWheel = smallerPrime * potentialPrime;
-						int smallerCompositeWheelFirstHit = smallerCompositeWheel * potentialPrime;
-
-						//Check if the smaller composite wheel's first hit is in the desired range.
-						if (smallerCompositeWheelFirstHit > smallerWheelRepetitionCircumfrance) {
-							//smallerWheelRepetitionCircumfrance values are capped at end, so need to continue checking all of them 
-							//	that are equal to end and only continue if they are equal.
-							if (smallerWheelRepetitionCircumfrance < end) {
-								//If out of repetition circumference, and repetition circumference is less than end, stop checking 
-								//	smaller primes.
-								break;
-							}
-							else {
-								continue;
-							}
-						}
-
-						//Create the smaller composite wheel with a first hit value of smallerPrime * potentialPrime^2.
-						int smallercompositeWheelIndex = compositeWheels.size();
-						compositeWheels.push_back(smallerCompositeWheel);
-						compositeWheelNextBlockingValues.push_back(smallerCompositeWheelFirstHit);
-						compositeWheelBasePrimes.push_back(smallerPrime);
-						compositeWheelToPrimeWheelIndex.push_back(smallerPrimeIndex);
-						compositeWheelPrimeMultiplierIndexes.push_back(primeIndex);
-						compositeWheelPrimeStartingIndexs.push_back(primeIndex);
-						compositeWheelWillHaveChildren.push_back(true);
-						compositeWheelIndexQueue.push({ smallerCompositeWheelFirstHit, smallercompositeWheelIndex });
-					}
 				}
 
 				//Add the first stitch for the prime value being hit.
@@ -279,19 +288,9 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 		//If it has, it needs to be sized up by dropping the current wheel and working 
 		//	on the repetition circumference of the next prime wheel.
 		if (++bigWheelIndex == bigWheelSize) {
-			if (printAll) {
-				PrintVector(primes, "Primes");
-				std::cout << "Big Wheel Index: " << bigWheelIndex << std::endl;
-				std::cout << "Dropping compositeWheelBasePrime " << nextWheelToDrop << std::endl;
-				PrintVector(bigWheel, "Big Wheel before");
-			}
-
 			//Do stitches for current wheel before sizing up the big wheel.
 			int tempNum = 1;
 			int tempBigWheelIndex = -1;
-			if (printAll) {
-				PrintVector(stitches[primesNextWheelIndex], "Stitches");
-			}
 
 			for (const auto& stitch : stitches[primesNextWheelIndex]) {//TODO: Make stitches pointers/reference to the bigWheel values instead of using tempNum/tempBigWheelIndex
 				//Stitch by combining the value at the index of the stitch with the value at the previous index.
@@ -309,10 +308,6 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 				--bigWheelSize;
 			}
 
-			if (printAll) {
-				PrintVector(bigWheel, "Big Wheel after Stitches");
-			}
-
 			//Duplicate the big wheel x number of times, where x is the next prime wheel being worked on. 2, 6, 30, 210, 2310, 30030, 510510...
 			++primesNextWheelIndex;
 			nextWheelToDrop = primes[primesNextWheelIndex];
@@ -323,15 +318,6 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 
 			bigWheelSize = bigWheel.size();//TODO: calculate manually.
 			bigWheelCircumfrance *= nextWheelToDrop;
-			if (printAll) {
-				PrintVector(bigWheel, "Big Wheel after size up");
-				std::cout << std::endl;
-			}
-		}
-
-		if (printAll) {
-			std::cout << "potentialPrime += bigWheel[" << bigWheelIndex << "]; " << potentialPrime << " += " << bigWheel[bigWheelIndex] << " = " << potentialPrime + bigWheel[bigWheelIndex] << ", nextCompositeWheelBlockingValue: " << nextCompositeWheelBlockingValue << std::endl;
-			PrintQueuePairs(compositeWheelIndexQueue);
 		}
 
 		//Spin the big wheel to get the next potential prime.

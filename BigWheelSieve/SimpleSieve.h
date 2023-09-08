@@ -25,5 +25,5 @@ long SimpleSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	}
 
 	auto end_time = std::chrono::high_resolution_clock::now();
-	return std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start).count();
+	return std::chrono::duration_cast<std::chrono::microseconds>(end_time - start).count();
 }

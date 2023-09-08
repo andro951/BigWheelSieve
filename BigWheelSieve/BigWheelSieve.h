@@ -115,7 +115,7 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 		}
 
 		auto end_early_time = std::chrono::high_resolution_clock::now();
-		return std::chrono::duration_cast<std::chrono::milliseconds>(end_early_time - start).count();
+		return std::chrono::duration_cast<std::chrono::microseconds>(end_early_time - start).count();
 	}
 
 	int potentialPrime = 11;
@@ -129,6 +129,7 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	std::map<int, int> primeIndexes = { { 2, 0 }, { 3, 1 }, { 5, 2 }, {7, 3 } };
 	std::vector<int> wheelRepititionCircumfrances = { 2, 6, 30, 210 };//Same size as primes
 	std::vector<std::vector<int>> stitches = { {}, {}, { 5 }, { 7 } };//Same size as primes
+	//std::vector<std::vector<int*>> stitches = { {}, {}, { &bigWheel[1] }, { &bigWheel[2] }};//Same size as primes.  Points to the 2nd of the 2 values that need to be stitched
 
 	int nextCompositeWheelBlockingValue = 25;
 	std::vector<int> compositeWheels = { 5, 7 };
@@ -141,6 +142,9 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>>> compositeWheelIndexQueue;
 	compositeWheelIndexQueue.push({ 25, 0 });
 	compositeWheelIndexQueue.push({ 49, 1 });
+
+	long stitchTime = 0;
+	long stichEraseTime = 0;
 
 	do {
 		//Check if the number is the next composite that isn't skipped by the big wheel.
@@ -305,9 +309,12 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 			int tempNum = 1;
 			int tempBigWheelIndex = -1;
 
-			for (const auto& stitch : stitches[primesNextWheelIndex]) {//TODO: Make stitches pointers/reference to the bigWheel values instead of using tempNum/tempBigWheelIndex
+			auto startStitches = std::chrono::high_resolution_clock::now();
+			//for (const auto& stitch : stitches[primesNextWheelIndex]) {//TODO: Make stitches pointers/reference to the bigWheel values instead of using tempNum/tempBigWheelIndex
+			std::vector<int>& stitchesForCurrentWheel = stitches[primesNextWheelIndex];
+			for (int i = 0; i < stitchesForCurrentWheel.size(); ++i) {
 				//Stitch by combining the value at the index of the stitch with the value at the previous index.
-				while (tempNum < stitch) {
+				while (tempNum < stitchesForCurrentWheel[i]) {
 					int numToAdd = bigWheel[++tempBigWheelIndex];
 					tempNum += numToAdd;
 				}
@@ -315,11 +322,17 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 				int numToAdd2 = bigWheel[++tempBigWheelIndex];
 				tempNum += numToAdd2;
 				bigWheel[tempBigWheelIndex - 1] += bigWheel[tempBigWheelIndex];
+				auto startErase = std::chrono::high_resolution_clock::now();
 				bigWheel.erase(bigWheel.begin() + tempBigWheelIndex);
+				auto endErase = std::chrono::high_resolution_clock::now();
+				stichEraseTime += std::chrono::duration_cast<std::chrono::microseconds>(endErase - startErase).count();
 				--tempBigWheelIndex;
 				--bigWheelIndex;
 				--bigWheelSize;
 			}
+
+			auto endStitches = std::chrono::high_resolution_clock::now();
+			stitchTime += std::chrono::duration_cast<std::chrono::microseconds>(endStitches - startStitches).count();
 
 			//Duplicate the big wheel x number of times, where x is the next prime wheel being worked on. 2, 6, 30, 210, 2310, 30030, 510510...
 			++primesNextWheelIndex;
@@ -337,6 +350,9 @@ long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 
 	} while (potentialPrime < end);
 
+	std::cout << "Stitch time: " << stitchTime << " microseconds" << std::endl;
+	std::cout << "Stitch erase time: " << stichEraseTime << " microseconds" << std::endl;
+
 	auto end_time = std::chrono::high_resolution_clock::now();
-	return std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start).count();
+	return std::chrono::duration_cast<std::chrono::microseconds>(end_time - start).count();
 }

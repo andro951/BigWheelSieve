@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include "SieveOfSundaram.h"
 
 std::vector<int> PrimeFactors(int n) {
 	std::vector<int> primes;

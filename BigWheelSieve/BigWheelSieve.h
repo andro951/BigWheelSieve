@@ -101,7 +101,6 @@ Description -
 #include "SharedConstants.h"
 #include "SimpleSieve.h"
 #include "Logging.h"
-#include "PrimeFactorization.h"
 
 long BigWheelSieve(std::vector<int>& primes, int end = SIEVE_END_VALUE) {
 	auto start = std::chrono::high_resolution_clock::now();
